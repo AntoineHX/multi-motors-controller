@@ -26,6 +26,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
+	controllerCmd.AddCommand(serveCmd)
 	motorCmd.AddCommand(serveCmd)
 
 	// Here you will define your flags and configuration settings.

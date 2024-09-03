@@ -10,26 +10,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// motorCmd represents the motor command
-var motorCmd = &cobra.Command{
-	Use:   "motor",
-	Short: "motor command descritpion",
-	Long: `motor command descritpion`,
+// setJointsCmd represents the setJoints command
+var setJointsCmd = &cobra.Command{
+	Use:   "setJoints",
+	Short: "setJoints command descritpion",
+	Long: `setJoints command descritpion`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("motor called")
+		fmt.Println("setJoints called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(motorCmd)
+	controllerCmd.AddCommand(setJointsCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// motorCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// setJointsCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// motorCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// setJointsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
