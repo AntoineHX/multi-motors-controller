@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = ".;motorprotos";
+
+package motorprotos;
+
+// Server converting target angles to velocity profile for mo
+service MotorsController {
+    rpc SetJoints(Angles) returns (Angles) {}
+    rpc GetJoints(google.protobuf.Empty) returns (Angles) {}
+}
+// Server converting target angles to velocity profile for mo
+//service Motor {
+//    rpc SetVolicty(Velocity) returns (google.protobuf.Empty) {}
+//    rpc ReceiveDataStream(google.protobuf.Empty) returns (stream
+//}
+
+message Angles {
+    repeated double angles = 1;
+}
+
+message Velocity {
+    double velocity = 1;
+}
+
+message MotorData {
+    double angle = 1;
+    double velocity = 2;
+    string error = 3; // Will be filled if motor encounter an error
+}
