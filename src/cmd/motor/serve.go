@@ -36,7 +36,3 @@ func init() {
 
 	//TODO: Support Motor ID flag
 }
-
-func controller() {
-
-}
