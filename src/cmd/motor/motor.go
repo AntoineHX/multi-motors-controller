@@ -2,10 +2,12 @@
 Copyright © 2024 Antoine Harle antoine.harle@proton.me
 
 */
-package cmd
+package motor
 
 import (
 	"fmt"
+
+	"github.com/AntoineHX/multi-motors-controller/src/cmd"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +23,7 @@ var motorCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(motorCmd)
+	cmd.RootCmd.AddCommand(motorCmd)
 
 	// Here you will define your flags and configuration settings.
 

@@ -2,7 +2,7 @@
 Copyright © 2024 Antoine Harle antoine.harle@proton.me
 
 */
-package cmd
+package controller
 
 import (
 	"fmt"
@@ -13,21 +13,17 @@ import (
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "serve command descritpion",
+	Long: `serve command descritpion`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called with: Port ", cmd.Flag("port").Value, " - ID ", cmd.Flag("id").Value)
+		fmt.Println("serve called with: Port ", cmd.Flag("port").Value)
+		fmt.Println(cmd.CommandPath())
 	},
 }
 
 func init() {
 	controllerCmd.AddCommand(serveCmd)
-	motorCmd.AddCommand(serveCmd)
+	// motorCmd.AddCommand(serveCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -38,6 +34,4 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	serveCmd.Flags().Uint16P("port", "p", 8080, "Port")
-
-	//TODO: Support Motor ID flag
 }

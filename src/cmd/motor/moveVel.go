@@ -2,7 +2,7 @@
 Copyright © 2024 Antoine Harle antoine.harle@proton.me
 
 */
-package cmd
+package motor
 
 import (
 	"fmt"
