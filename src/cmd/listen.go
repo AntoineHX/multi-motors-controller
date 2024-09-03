@@ -16,7 +16,7 @@ var listenCmd = &cobra.Command{
 	Short: "listen command descritpion",
 	Long: `listen command descritpion`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("listen called")
+		fmt.Println("listen called with ID: ", cmd.Flag("id").Value)
 	},
 }
 
@@ -31,5 +31,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// listenCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// listenCmd.Flags().Uint16("id", 0, "Identifier number")
 }

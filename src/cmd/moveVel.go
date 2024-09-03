@@ -16,7 +16,7 @@ var moveVelCmd = &cobra.Command{
 	Short: "moveVel command descritpion",
 	Long: `moveVel command descritpion`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("moveVel called")
+		fmt.Println("moveVel called with: ID ", cmd.Flag("id").Value, " Vel ", cmd.Flag("vel").Value)
 	},
 }
 
@@ -31,5 +31,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// moveVelCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//TODO: Anonymous flag (with anonymous flag group ?)
+	moveVelCmd.Flags().Float32("vel", 0, "Velocity (degrees/s)")
 }

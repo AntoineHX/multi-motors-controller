@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	// "strings"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +17,7 @@ var setJointsCmd = &cobra.Command{
 	Short: "setJoints command descritpion",
 	Long: `setJoints command descritpion`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("setJoints called")
+		fmt.Println("setJoints called with target :", cmd.Flag("vel").Value)
 	},
 }
 
@@ -31,5 +32,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// setJointsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//TODO: Anonymous flag (with anonymous flag group ?)
+	//TODO: Fix input of multiple values as slice
+	setJointsCmd.Flags().Float32Slice("vel", nil, "Target joint values") //or IntSlice ?
+	setJointsCmd.MarkFlagRequired("vel")
 }
