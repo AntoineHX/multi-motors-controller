@@ -1,0 +1,17 @@
+motors:
+  - id: 1
+    port: 8081
+    min_pos: -250 # degrees
+    max_pos: 250 # degrees
+    max_vel: 100 # degrees/second
+    accel: 200 #### BONUS, pas obligatoire
+  - id: 2
+    port: 8082
+    min_pos: -100 # degrees
+    max_pos: 100 # degrees
+    max_vel: 200 # degrees/s
+  - id: 3
+    port: 8083
+    min_pos: -500 # degrees
+    max_pos: 500 # degrees
+    max_vel: 500 # degrees/s

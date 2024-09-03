@@ -17,16 +17,12 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "src",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Multi Motors Controller",
+	Long: `Root command of Multi Motors Controller`,
+	// Args: cobra.MinimumNArgs(1),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	// Run: func(cmd *cobra.Command, args []string) { fmt.Println("root called with: ", viper.Get("motors")) },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -45,7 +41,9 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.src.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.cobra.yaml)")
+	//rootCmd.MarkFlagRequired("config")
+	// viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -55,6 +53,7 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
+		// viper.SetConfigType("yaml") // REQUIRED if the config file does not have the extension in the name
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
@@ -73,5 +72,12 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	} else {
+		panic(fmt.Errorf("fatal error config file: %w", err))
+		// if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		// 	// Config file not found; ignore error if desired
+		// } else {
+		// 	// Config file was found but another error was produced
+		// }
 	}
 }
