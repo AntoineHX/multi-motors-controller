@@ -6,13 +6,17 @@ package controller
 
 import (
 	"fmt"
+	"context"
+	"log"
+	"time"
+	"net"
+
+	motor "github.com/AntoineHX/multi-motors-controller/src/cmd/motor"
 
 	"github.com/spf13/cobra"
 
-	"context"
-	"log"
-	"net"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	pb "github.com/AntoineHX/multi-motors-controller/src/proto"
 )
 
@@ -29,6 +33,7 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("serve called with: Port ", port)
 		fmt.Println(cmd.CommandPath())
+		updateConfig()
 		serve()
 	},
 }
@@ -55,15 +60,43 @@ type server struct {
 }
 
 func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, error) {
+	//TODO: use a coroutines to prevent blocking the main thread
 	log.Printf("Received: %v", in.GetAngles())
 	return &pb.Angles{Angles: in.GetAngles()}, nil
 }
 
 //TODO: Fix compiling issue with google.protobuf.Empty message
 func (s *server) GetJoints(ctx context.Context, in *pb.Empty) (*pb.Angles, error) {
-	var angles = []float64{0, 0, 0}
-	log.Printf("Sending: %v", angles)
+	//TODO: use a coroutines to prevent blocking the main thread
+	var angles = []float64{}
+	for i, _ := range motor_configs {
+		angles = append(angles,getMotorState(i).Angle)
+	}
+	
+	// log.Printf("Sending: %v", angles)
 	return &pb.Angles{Angles: angles}, nil
+}
+
+func getMotorState(idx int)(motor.State){
+	//TODO: Check if motor server is running
+	//TODO: Only declare once per motor
+	// Set up a connection to the server.
+	var addr = fmt.Sprintf("%s:%d", ip, motor_configs[idx].Port)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewMotorClient(conn)
+
+	// Contact the server and return its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.GetData(ctx, &pb.Empty{})
+	if err != nil {
+		log.Fatalf("could not send: %v", err)
+	}
+	return motor.State{Angle: r.GetAngle(), Velocity: r.GetVelocity(), Error: r.GetError()}
 }
 
 func serve() {
