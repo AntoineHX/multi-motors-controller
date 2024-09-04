@@ -10,6 +10,8 @@ import (
 	"log"
 	"time"
 	"net"
+	"slices"
+	"math"
 
 	motor "github.com/AntoineHX/multi-motors-controller/src/cmd/motor"
 
@@ -59,10 +61,89 @@ type server struct {
 	pb.UnimplementedMotorsControllerServer
 }
 
+//TODO: Coroutine to regulate motor velocities
 func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, error) {
-	//TODO: use a coroutines to prevent blocking the main thread
-	log.Printf("Received: %v", in.GetAngles())
-	return &pb.Angles{Angles: in.GetAngles()}, nil
+	//TODO: use a coroutines to prevent blocking the main thread	
+	var tgt_angles = []float64{in.GetAngles()[0], in.GetAngles()[0], in.GetAngles()[0]} //TODO: Replace by in.GetAngles()
+	
+
+	//TODO: Check error states of motors
+	//TODO: Check target angles limits
+
+	//Compute velocities
+	var(
+		cmd_vel = []float64{} //Commanded velocities
+		motor_pos = []float64{} //Current motor positions
+		max_vels = []float64{} //Maximum velocities
+		traj_times = []float64{} //Trajectory times
+		s_traj_t float64 //Trajectory time (Synchronized motion)
+		limit_vel = false //Limit velocity to slowest motor
+	) 
+	for i := range tgt_angles {
+		//TODO: Use a coroutine to avoid blocking the main thread
+		motor_state := getMotorState(i) //Get current motor state
+		motor_pos = append(motor_pos, motor_state.Angle)
+		max_vels = append(max_vels, motor_configs[i].Max_vel)
+		
+		//Compute minimum trajectory times
+		traj_times = append(traj_times, math.Abs(tgt_angles[i]-motor_pos[i])/max_vels[i])
+	}
+	log.Printf("Requested joint positions: %v -> %v", motor_pos, tgt_angles)
+	// log.Printf("t: %v - %v", slices.Min(traj_times), traj_times)
+	//Compute maximal velocities
+	s_traj_t = slices.Min(traj_times) //Minimum trajectory time
+	for i := range tgt_angles {
+		cmd_vel = append(cmd_vel, (tgt_angles[i]-motor_pos[i])/s_traj_t)
+		if math.Abs(cmd_vel[i]) > max_vels[i] { // Velocity needs to be limited (Flag)
+			limit_vel = true
+		}
+	}
+	// log.Printf("cmd_vel: %v - %v", cmd_vel, limit_vel)
+	if limit_vel { //Limit velocity to slowest motor
+		s_traj_t = slices.Max(traj_times) //Trajectory time of slowest motor
+		for i := range cmd_vel  {
+			cmd_vel[i]= (tgt_angles[i]-motor_pos[i])/s_traj_t
+		}
+	}
+
+	//Send command to motors
+	log.Printf("Requested joints velocities (%v s): %v", s_traj_t, cmd_vel)
+	for i, vel := range cmd_vel { 		
+		setMotorVel(i, vel)
+	}
+
+	//Stop motors after trajectory time
+	go stopMotors(time.Duration(float64(time.Second)*s_traj_t))
+
+	return &pb.Angles{Angles: tgt_angles}, nil
+}
+
+func stopMotors(delay time.Duration) {
+	timer := time.NewTimer(delay)
+	<-timer.C //Block until delay is over
+	for i := range motor_configs { 		
+		setMotorVel(i, 0)
+	}
+}
+
+func setMotorVel(idx int, vel float64){
+	//TODO: Only declare client once per motor
+	// Set up a connection to the server.
+	var addr = fmt.Sprintf("%s:%d", ip, motor_configs[idx].Port)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewMotorClient(conn)
+
+	// Contact the server.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, err = c.SetVelocity(ctx, &pb.Velocity{Velocity: vel})
+	if err != nil {
+		log.Fatalf("could not send: %v", err)
+	}
 }
 
 //TODO: Fix compiling issue with google.protobuf.Empty message
@@ -79,7 +160,7 @@ func (s *server) GetJoints(ctx context.Context, in *pb.Empty) (*pb.Angles, error
 
 func getMotorState(idx int)(motor.State){
 	//TODO: Check if motor server is running
-	//TODO: Only declare once per motor
+	//TODO: Only declare client once per motor
 	// Set up a connection to the server.
 	var addr = fmt.Sprintf("%s:%d", ip, motor_configs[idx].Port)
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))

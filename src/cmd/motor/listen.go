@@ -64,6 +64,8 @@ func listen(){
 		if err != nil {
 			log.Fatalf("could not send: %v", err)
 		}
+
+		//TODO : Use Logrus
 		log.Printf("Motor state: %f° | %f°/s | %s", r.GetAngle(), r.GetVelocity(), r.GetError())
 
 		// Wait for a second

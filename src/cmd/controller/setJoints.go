@@ -18,10 +18,6 @@ import (
 	pb "github.com/AntoineHX/multi-motors-controller/src/proto"
 )
 
-var(
-	tgt_angles = []float64{} //TODO: Add to cobra config
-)
-
 //Cobra CLI
 // setJointsCmd represents the setJoints command
 var setJointsCmd = &cobra.Command{
@@ -29,8 +25,13 @@ var setJointsCmd = &cobra.Command{
 	Short: "setJoints command descritpion",
 	Long: `setJoints command descritpion`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("setJoints called with target :", cmd.Flag("vel").Value)
-		SetJoints()
+		fmt.Println("setJoints called with target :", cmd.Flag("j").Value)
+		tgt_angles, err:=cmd.Flags().GetFloat64Slice("j")
+		if err!= nil {
+			log.Fatalf("Failed read requested velocities %v", err)
+		}else{
+			SetJoints(tgt_angles)
+		}
 	},
 }
 
@@ -47,12 +48,12 @@ func init() {
 	// is called directly, e.g.:
 	//TODO: Anonymous flag (with anonymous flag group ?)
 	//TODO: Fix input of multiple values as slice
-	setJointsCmd.Flags().Float64SliceVar(&tgt_angles, "vel", nil, "Target joint values") //or IntSlice ?
-	setJointsCmd.MarkFlagRequired("vel")
+	setJointsCmd.Flags().Float64Slice("j", nil, "Target joint values") //or IntSlice ?
+	setJointsCmd.MarkFlagRequired("j")
 }
 
 //gRPC Client
-func SetJoints(){
+func SetJoints(tgt_angles []float64){
 	// Set up a connection to the server.
 	var addr = fmt.Sprintf("%s:%d", ip, port) //Defined in controller/serve
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))

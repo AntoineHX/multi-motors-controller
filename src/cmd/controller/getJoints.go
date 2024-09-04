@@ -62,5 +62,6 @@ func GetJoints(){
 	if err != nil {
 		log.Fatalf("could not send: %v", err)
 	}
-	log.Printf("Angles (°): %v", r.GetAngles()) //TODO: Format with °
+	//TODO : Use Logrus
+	log.Printf("Angles (°): %v", r.GetAngles())
 }
