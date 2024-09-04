@@ -48,7 +48,7 @@ func init() {
 // Could have been done with a coroutine and a range on a channel if launched from the server thread
 func listen(){
 	// Set up a connection to the server.
-	var addr = fmt.Sprintf("%s:%d", ip, curr_config.Port) //Defined in controller/serve
+	var addr = fmt.Sprintf("%s:%d", ip, curr_config.Port) //Defined in motor
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

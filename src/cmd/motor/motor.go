@@ -62,7 +62,7 @@ func init() {
 }
 
 // Update curr_config from config file
-func updateConfig(){
+func updateConfig()(bool){
 	//Find correct ID in config file
 	i := 0
 	config_id := fmt.Sprintf("motors.%d.id",i)
@@ -70,15 +70,9 @@ func updateConfig(){
 		// log.Printf("%v / %v", viper.GetInt(config_id), int(motorID))
 		if viper.GetInt(config_id) == int(motorID) {
 			//Extract config for this motor
-			err := viper.UnmarshalKey(fmt.Sprintf("motors.%d",i), &curr_config)
-			if err != nil {
-				log.Fatalf("unable to decode into struct, %v", err)
-				break
-			}
-
-			//Sanity check
-			if curr_config.Id != motorID {
-				log.Fatalf("Failed to update config. Requested ID: %d. Got: %d.", motorID, curr_config.Id)
+			if !ExtractConfig(i, &curr_config) { 
+				//Extraction failed->stop
+				return false
 			}
 			break
 		}
@@ -86,6 +80,21 @@ func updateConfig(){
 		i++
 		config_id = fmt.Sprintf("motors.%d.id",i)
 	}
-
+	//Sanity check
+	if curr_config.Id != motorID {
+		log.Fatalf("Failed to update config. Requested ID: %d. Got: %d.", motorID, curr_config.Id)
+		return false
+	}
 	log.Printf("Using config: %+v", curr_config)
+	return true
+}
+
+func ExtractConfig(idx int, config *Config)(bool){
+	//Extract config for this motor
+	err := viper.UnmarshalKey(fmt.Sprintf("motors.%d",idx), config) //&
+	if err != nil {
+		log.Fatalf("unable to decode into struct, %v", err)
+		return false
+	}
+	return true
 }
