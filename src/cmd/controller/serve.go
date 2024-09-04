@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	port uint16
+	ip string = "localhost" //localhost=127.0.0.1
+	port uint16 = 8080 //TODO: Share with config file or env var
 )
 // Cobra CLI 
 // serveCmd represents the serve command
@@ -58,12 +59,12 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 	return &pb.Angles{Angles: in.GetAngles()}, nil
 }
 
-//TODO: Fix compiling issue with Empty message
-// func (s *server) GetJoints(ctx context.Context, in *pb.emptypb.Empty) (*pb.Angles, error) {
-// 	var angles = []float64{0, 0, 0}
-// 	log.Printf("Sending: %v", angles)
-// 	return &pb.Angles{Angles: angles}, nil
-// }
+//TODO: Fix compiling issue with google.protobuf.Empty message
+func (s *server) GetJoints(ctx context.Context, in *pb.Empty) (*pb.Angles, error) {
+	var angles = []float64{0, 0, 0}
+	log.Printf("Sending: %v", angles)
+	return &pb.Angles{Angles: angles}, nil
+}
 
 func serve() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))

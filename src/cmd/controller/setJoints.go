@@ -19,7 +19,6 @@ import (
 )
 
 var(
-	addr = "localhost:8080" //TODO: Add to cobra config
 	tgt_angles = []float64{} //TODO: Add to cobra config
 )
 
@@ -55,6 +54,7 @@ func init() {
 //gRPC Client
 func SetJoints(){
 	// Set up a connection to the server.
+	var addr = fmt.Sprintf("%s:%d", ip, port) //Defined in controller/serve
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
