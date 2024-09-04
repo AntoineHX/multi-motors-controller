@@ -6,10 +6,12 @@ package motor
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/AntoineHX/multi-motors-controller/src/cmd"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -33,6 +35,7 @@ var(
 	curr_config Config //Current config of the motor
 )
 
+//Cobra CLI
 // motorCmd represents the motor command
 var motorCmd = &cobra.Command{
 	Use:   "motor",
@@ -56,4 +59,33 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// motorCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+// Update curr_config from config file
+func updateConfig(){
+	//Find correct ID in config file
+	i := 0
+	config_id := fmt.Sprintf("motors.%d.id",i)
+	for viper.IsSet(config_id){
+		// log.Printf("%v / %v", viper.GetInt(config_id), int(motorID))
+		if viper.GetInt(config_id) == int(motorID) {
+			//Extract config for this motor
+			err := viper.UnmarshalKey(fmt.Sprintf("motors.%d",i), &curr_config)
+			if err != nil {
+				log.Fatalf("unable to decode into struct, %v", err)
+				break
+			}
+
+			//Sanity check
+			if curr_config.Id != motorID {
+				log.Fatalf("Failed to update config. Requested ID: %d. Got: %d.", motorID, curr_config.Id)
+			}
+			break
+		}
+		//Next motor
+		i++
+		config_id = fmt.Sprintf("motors.%d.id",i)
+	}
+
+	log.Printf("Using config: %+v", curr_config)
 }

@@ -13,7 +13,7 @@ service MotorsController {
 }
 // Server converting target angles to velocity profile for mo
 service Motor {
-    rpc SetVolicty(Velocity) returns (Empty) {}
+    rpc SetVelocity(Velocity) returns (Empty) {}
     rpc GetData(Empty) returns (MotorData) {}
 }
 

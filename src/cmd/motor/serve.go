@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"context"
 	"log"
@@ -54,42 +53,14 @@ func init() {
 	//TODO: Support Motor ID flag
 }
 
-func updateConfig(){
-	//Find correct ID in config file
-	i := 0
-	config_id := fmt.Sprintf("motors.%d.id",i)
-	for viper.IsSet(config_id){
-		// log.Printf("%v / %v", viper.GetInt(config_id), int(motorID))
-		if viper.GetInt(config_id) == int(motorID) {
-			//Extract config for this motor
-			err := viper.UnmarshalKey(fmt.Sprintf("motors.%d",i), &curr_config)
-			if err != nil {
-				log.Fatalf("unable to decode into struct, %v", err)
-				break
-			}
-
-			//Sanity check
-			if curr_config.Id != motorID {
-				log.Fatalf("Failed to update config. Requested ID: %d. Got: %d.", motorID, curr_config.Id)
-			}
-			break
-		}
-		//Next motor
-		i++
-		config_id = fmt.Sprintf("motors.%d.id",i)
-	}
-
-	log.Printf("Using config: %+v", curr_config)
-}
-
 //gRPC server
-// server is used to implement MotorsControllerServer.
+// server is used to implement MotorServer.
 type server struct {
-	pb.UnimplementedMotorsControllerServer
+	pb.UnimplementedMotorServer
 }
 
 //TODO: Fix compiling issue with google.protobuf.Empty message
-func (s *server) SetVolicty(ctx context.Context, in *pb.Velocity) (*pb.Empty, error) {
+func (s *server) SetVelocity(ctx context.Context, in *pb.Velocity) (*pb.Empty, error) {
 	log.Printf("Received: %v", in.GetVelocity())
 	select{
 		case cmdVelChan<-in.GetVelocity(): //Send command
@@ -117,7 +88,7 @@ func serve() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterMotorsControllerServer(s, &server{})
+	pb.RegisterMotorServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
@@ -132,9 +103,9 @@ func init_sim(){
 	state.Velocity = 0
 	state.Error = ""
 
-	//Channels //TODO: Add buffer ?
-	stateChan = make(chan State) // State channel of the simulation
-	cmdVelChan = make(chan float64)// Command channel of the simulation
+	//Channels
+	stateChan = make(chan State, 1) // State channel of the simulation
+	cmdVelChan = make(chan float64, 1)// Command channel of the simulation
 
 	go motor_sim(state, curr_config, 1) //Run sim at 10Hz
 	//close(cmdVelChan) //Stop sim
