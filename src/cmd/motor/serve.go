@@ -126,17 +126,30 @@ func motor_sim(state_init State, config Config, sim_freq float64){
 					close(stateChan)
 					return
 				}
+				//Clamp cmd_vel to max/min limits
+				if cmd_vel > config.Max_vel || cmd_vel < -config.Max_vel {
+					log.Printf("Command velocity out of limits (%f). Clamping to %f",cmd_vel,config.Max_vel)
+					if cmd_vel>=0 {
+						cmd_vel = config.Max_vel 
+					} else if cmd_vel < 0 {
+						cmd_vel = -config.Max_vel
+					}	
+				}
 				break;
 			default: //No command, do nothing
 		}
 		
 		// cmdVelChan
 		//Update state
-		state.Velocity = cmd_vel //Infinite acceleration
-		state.Angle += state.Velocity * 1/sim_freq //Neglect computation delay for delta time
-		
-		//TODO: Error check
+		//TODO: Error recovery ?
+		if state.Error == "" { //If error, stop update
+			state.Velocity = cmd_vel //Infinite acceleration
+			state.Angle += state.Velocity * 1/sim_freq //Neglect computation delay for delta time
+		}
 
+		if  state.Angle > config.Max_pos || state.Angle < config.Min_pos { //Limit angle
+			state.Error = "Position out of range"
+		}
 		//Send new state to channel (non-blocking)
 		select{
 			case stateChan <- state:
