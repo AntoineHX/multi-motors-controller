@@ -12,6 +12,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type config struct {
+	Id uint16
+	Port uint16 
+	Min_pos float64
+	Max_pos float64
+	Max_vel float64
+	Accel float64
+}
+
+var(
+	motorID uint16 = 0 //Requested ID
+	ip string = "localhost" //localhost=127.0.0.1
+	curr_config config //Current config of the motor
+)
+
 // motorCmd represents the motor command
 var motorCmd = &cobra.Command{
 	Use:   "motor",
@@ -29,7 +44,7 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	motorCmd.PersistentFlags().Uint16("id", 0, "Identifier number")
+	motorCmd.PersistentFlags().Uint16Var(&motorID, "id", 0, "Identifier number")
 	motorCmd.MarkFlagRequired("id")
 
 	// Cobra supports local flags which will only run when this command

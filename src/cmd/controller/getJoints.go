@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 	"time"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

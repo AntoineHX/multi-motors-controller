@@ -12,10 +12,10 @@ service MotorsController {
     rpc GetJoints(Empty) returns (Angles) {} 
 }
 // Server converting target angles to velocity profile for mo
-//service Motor {
-//    rpc SetVolicty(Velocity) returns (Empty) {}
-//    rpc ReceiveDataStream(Empty) returns (stream
-//}
+service Motor {
+    rpc SetVolicty(Velocity) returns (Empty) {}
+    rpc GetData(Empty) returns (MotorData) {}
+}
 
 message Angles {
     repeated double angles = 1;
