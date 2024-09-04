@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type config struct {
+type Config struct {
 	Id uint16
 	Port uint16 
 	Min_pos float64
@@ -21,10 +21,16 @@ type config struct {
 	Accel float64
 }
 
+type State struct {
+	Angle float64 
+	Velocity float64
+	Error string //Error message if any
+}
+
 var(
 	motorID uint16 = 0 //Requested ID
 	ip string = "localhost" //localhost=127.0.0.1
-	curr_config config //Current config of the motor
+	curr_config Config //Current config of the motor
 )
 
 // motorCmd represents the motor command
