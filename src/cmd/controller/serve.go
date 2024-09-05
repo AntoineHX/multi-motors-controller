@@ -30,8 +30,8 @@ var (
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "serve command descritpion",
-	Long: `serve command descritpion`,
+	Short: "Start Motor Controller server",
+	Long: `Start Motor Controller server`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("serve called with: Port ", port)
 		fmt.Println(cmd.CommandPath())
@@ -66,7 +66,7 @@ type server struct {
 func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, error) {
 	//TODO: use as a coroutine to prevent blocking the main thread
 	var(
-		tgt_angles = []float64{in.GetAngles()[0], in.GetAngles()[0], in.GetAngles()[0]} //TODO: Replace by in.GetAngles()
+		tgt_angles = in.GetAngles() //TODO: Replace by in.GetAngles()
 		cmd_vel = make([]float64, len(tgt_angles)) //Commanded velocities
 		motor_pos = []float64{} //Current motor positions
 		max_vels = []float64{} //Maximum velocities
@@ -78,7 +78,7 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 	)
 
 	//Get motor states
-	for i := range tgt_angles {
+	for i := range motor_configs {
 		//TODO: Use a coroutine to avoid blocking the main thread
 		motor_state := getMotorState(i) //Get current motor state
 		motor_pos = append(motor_pos, motor_state.Angle)
@@ -92,10 +92,14 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 	// log.Printf("t: %v - %v", slices.Min(traj_times), traj_times)
 
 	if controller_error ==""{ //If no error, check for valid target angles
-		for i, angle := range tgt_angles {
-			if angle > motor_configs[i].Max_pos || angle < motor_configs[i].Min_pos{
-				controller_error = "InvalidTargetAngles"
-				break
+		if len(tgt_angles)> len(motor_configs){ //Check size
+			controller_error = "InvalidRequestSize"
+		} else { //Check angles limit
+			for i, angle := range tgt_angles {
+				if angle > motor_configs[i].Max_pos || angle < motor_configs[i].Min_pos{
+					controller_error = "InvalidTargetAngles"
+					break
+				}
 			}
 		}
 	}
@@ -136,6 +140,9 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 		case "MotorFault":
 			log.Printf("ERROR - Motor error preventing command: %v", motor_errors)
 			return &pb.Angles{Angles: motor_pos}, nil //Return motor positions TODO: Return error message
+		case "InvalidRequestSize":
+			log.Printf("ERROR - Request size [%d] is invalid. Expected size [%d]", len(tgt_angles), len(motor_configs))
+			return &pb.Angles{Angles: motor_pos}, nil
 		case "InvalidTargetAngles":
 			log.Print("ERROR - out of limits:")
 			for i, tgt := range tgt_angles{
@@ -191,7 +198,7 @@ func setMotorVel(idx int, vel float64){
 
 //TODO: Fix compiling issue with google.protobuf.Empty message
 func (s *server) GetJoints(ctx context.Context, in *pb.Empty) (*pb.Angles, error) {
-	//TODO: use a coroutines to prevent blocking the main thread
+	//TODO: use a coroutines to prevent blocking the main thread and server crash in case of errors
 	var angles = []float64{}
 	for i, _ := range motor_configs {
 		angles = append(angles,getMotorState(i).Angle)

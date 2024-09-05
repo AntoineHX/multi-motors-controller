@@ -22,10 +22,10 @@ import (
 // listenCmd represents the listen command
 var listenCmd = &cobra.Command{
 	Use:   "listen",
-	Short: "listen command descritpion",
-	Long: `listen command descritpion`,
+	Short: "Listen motor state",
+	Long: `Continuous retrieval of complete motor state from motor server`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("listen called with ID: ", cmd.Flag("id").Value)
+		// fmt.Println("listen called with ID: ", cmd.Flag("id").Value)
 		updateConfig()
 		listen() //Blocking call
 	},

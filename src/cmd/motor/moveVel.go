@@ -6,6 +6,7 @@ package motor
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -22,16 +23,20 @@ import (
 // moveVelCmd represents the moveVel command
 var moveVelCmd = &cobra.Command{
 	Use:   "moveVel",
-	Short: "moveVel command descritpion",
-	Long: `moveVel command descritpion`,
+	Short: "Set velocity of motor",
+	Long: `Request motor server to move at given velocity`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("moveVel called with: ID ", cmd.Flag("id").Value, " Vel ", cmd.Flag("vel").Value)
-		updateConfig()
-		var vel, err = cmd.Flags().GetFloat64("vel")
-		if err!= nil {
-			log.Fatalf("Failed read requested velocity %v", err)
+		//Parse target velocity
+		if len(args)!=1 {
+			log.Fatalf("Wrong number of arguments")
 		}else{
-			moveVel(vel)
+			vel, err :=  strconv.ParseFloat(args[0],64)
+			if err!= nil{
+				log.Fatalf("Failed to parse joint velocity %v", err)
+			} else {
+				updateConfig()
+				moveVel(vel) //Set motor velocity
+			}
 		}
 	},
 }
@@ -47,8 +52,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	//TODO: Anonymous flag (with anonymous flag group ?)
-	moveVelCmd.Flags().Float64("vel", 0, "Velocity (degrees/s)")
+	moveVelCmd.Flags().Float64("", 0, "Velocity (degrees/s)") //Only used for help message
+	// moveVelCmd.MarkFlagRequired("vel")
 }
 
 //gRPC Client
@@ -68,5 +73,7 @@ func moveVel(cmd_vel float64){
 	_, err = c.SetVelocity(ctx, &pb.Velocity{Velocity: cmd_vel})
 	if err != nil {
 		log.Fatalf("could not send: %v", err)
+	} else {
+		log.Printf("Requested velocity [%f]°/s to motor %d", cmd_vel, curr_config.Id)
 	}
 }

@@ -11,9 +11,9 @@ In root directory, call `make` to generate binary file. To clean up, call `make 
     ```bash
     ./motorsim -c ./cfg/motors.yaml motor --id [ID] serve
     ```
-2. Start Motor controller server (Beware, controllers commands except Port 8080):
+2. Start Motor controller server (Beware, if modifying port controllers commands except Port 8080):
     ```bash
-    ./motorsim -c ./cfg/motors.yaml controller serve -p 8080
+    ./motorsim -c ./cfg/motors.yaml controller serve
     ```
 ### Client usage
 #### Motor controller commands
@@ -21,9 +21,9 @@ In root directory, call `make` to generate binary file. To clean up, call `make 
     ```bash
     ./motorsim -c ./cfg/motors.yaml controller getJoints
     ```
-- Set joints values (Beware, currently set the same values for all joints):
+- Set joints values:
     ```bash
-    ./motorsim -c ./cfg/motors.yaml controller setJoints --j [Joint goals]
+    ./motorsim -c ./cfg/motors.yaml controller setJoints [Joint goals]
     ```
 #### Motor commands
 Every command should be provided with valid ID from [config file](./cfg/motors.yaml):
@@ -33,7 +33,7 @@ Every command should be provided with valid ID from [config file](./cfg/motors.y
     ```
 - Set motor velocity:
     ```bash
-    ./motorsim -c ./cfg/motors.yaml motor --id [ID] moveVel --vel [Velocity]
+    ./motorsim -c ./cfg/motors.yaml motor --id [ID] moveVel -- [Velocity]
     ```
 
 ## TODO
@@ -42,4 +42,4 @@ Every command should be provided with valid ID from [config file](./cfg/motors.y
 - [ ] Use coroutines for gRPC services callbacks.
 - [ ] Fix get Motor State service (Behavior not robust).
 - [ ] Fix Controller SetJoint command CLI omitting multiples input values.
-- [ ] Complete CLI help messages.
+- [ ] Send error responses to clients of gRPC services.

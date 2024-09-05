@@ -23,10 +23,10 @@ var(
 // controllerCmd represents the controller command
 var controllerCmd = &cobra.Command{
 	Use:   "controller",
-	Short: "controller command description",
-	Long: `controller command description`,
+	Short: "Motor controller command",
+	Long: `Motor controller command`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("controller called")
+		cmd.Help() //Nothing to do, show help
 	},
 }
 

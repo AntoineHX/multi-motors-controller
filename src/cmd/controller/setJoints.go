@@ -6,7 +6,7 @@ package controller
 
 import (
 	"fmt"
-
+	"strconv"
 	"github.com/spf13/cobra"
 
 	"context"
@@ -22,16 +22,21 @@ import (
 // setJointsCmd represents the setJoints command
 var setJointsCmd = &cobra.Command{
 	Use:   "setJoints",
-	Short: "setJoints command descritpion",
-	Long: `setJoints command descritpion`,
+	Short: "Set target joint angles for the motors",
+	Long: `Request the Motor Controller to command the motors to reach the target joint angles`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("setJoints called with target :", cmd.Flag("j").Value)
-		tgt_angles, err:=cmd.Flags().GetFloat64Slice("j")
-		if err!= nil {
-			log.Fatalf("Failed read requested velocities %v", err)
-		}else{
-			SetJoints(tgt_angles)
+		//Parse target angles
+		var tgt_angles []float64
+		for _, arg := range args {
+			angle, err := strconv.ParseFloat(arg, 64)
+			if err!= nil{
+				log.Fatalf("Failed to parse joint angle %v", err)
+			}else{
+				tgt_angles = append(tgt_angles, angle)
+			}
 		}
+		//Set joint angles
+		SetJoints(tgt_angles)
 	},
 }
 
@@ -46,10 +51,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	//TODO: Anonymous flag (with anonymous flag group ?)
-	//TODO: Fix input of multiple values as slice
-	setJointsCmd.Flags().Float64Slice("j", nil, "Target joint values") //or IntSlice ?
-	setJointsCmd.MarkFlagRequired("j")
+	setJointsCmd.Flags().Float64Slice("", nil, "Target joint values") //Only used for help message
+	// setJointsCmd.MarkFlagRequired("")
 }
 
 //gRPC Client
@@ -70,5 +73,5 @@ func SetJoints(tgt_angles []float64){
 	if err != nil {
 		log.Fatalf("could not send: %v", err)
 	}
-	log.Printf("Received: %v", r.GetAngles())
+	log.Printf("Moving to (°): %v", r.GetAngles())
 }

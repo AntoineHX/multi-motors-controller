@@ -42,12 +42,12 @@ func init() {
 	// will be global for your application.
 
 	RootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.cobra.yaml)")
-	//RootCmd.MarkFlagRequired("config")
+	RootCmd.MarkPersistentFlagRequired("config")
 	// viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.

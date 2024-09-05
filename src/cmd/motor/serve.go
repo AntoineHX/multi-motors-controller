@@ -27,11 +27,9 @@ var(
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "serve command descritpion",
-	Long: `serve command descritpion`,
+	Short: "Start motor server",
+	Long: `Start motor server`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called with ID ", cmd.Flag("id").Value)
-		// fmt.Println(cmd.CommandPath())
 		updateConfig()
 		init_sim()
 		serve()

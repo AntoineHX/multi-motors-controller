@@ -22,10 +22,9 @@ import (
 // getJointsCmd represents the getJoints command
 var getJointsCmd = &cobra.Command{
 	Use:   "getJoints",
-	Short: "getJoints command descritpion",
-	Long: `getJoints command descritpion`,
+	Short: "Retreive motor positions",
+	Long: `Retreive the positions of the motor controlled by Motor Controller server`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// fmt.Println("getJoints called")
 		GetJoints()
 	},
 }

@@ -39,10 +39,10 @@ var(
 // motorCmd represents the motor command
 var motorCmd = &cobra.Command{
 	Use:   "motor",
-	Short: "motor command descritpion",
-	Long: `motor command descritpion`,
+	Short: "Motor command",
+	Long: `Motor command`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("motor called with ID: ", cmd.Flag("id").Value)
+		cmd.Help() //Nothing to do, show help
 	},
 }
 
@@ -54,7 +54,7 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	motorCmd.PersistentFlags().Uint16Var(&motorID, "id", 0, "Identifier number")
-	motorCmd.MarkFlagRequired("id")
+	motorCmd.MarkPersistentFlagRequired("id")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
