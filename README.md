@@ -37,4 +37,9 @@ Every command should be provided with valid ID from [config file](./cfg/motors.y
     ```
 
 ## TODO
-- [ ] Prevent startup of multiple motors with same ID.
+- [ ] Closed loop control.
+- [ ] Share Motor controller port with controller commands.
+- [ ] Use coroutines for gRPC services callbacks.
+- [ ] Fix get Motor State service (Behavior not robust).
+- [ ] Fix Controller SetJoint command CLI omitting multiples input values.
+- [ ] Complete CLI help messages.
