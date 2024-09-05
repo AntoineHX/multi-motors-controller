@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/sirupsen/logrus"
 
 	"context"
 	"log"
@@ -74,6 +75,7 @@ func (s *server) SetVelocity(ctx context.Context, in *pb.Velocity) (*pb.Empty, e
 func (s *server) GetData(ctx context.Context, in *pb.Empty) (*pb.MotorData, error) {
 	var state State
 	select {
+		//TODO: Risk of empty buffer due to logging ?
 		case state = <-stateChan :
 			return &pb.MotorData{Angle: state.Angle, Velocity: state.Velocity, Error: state.Error}, nil
 		default:
@@ -103,11 +105,12 @@ func init_sim(){
 	state.Velocity = 0
 	state.Error = ""
 
-	//Channels
+	//Channels (Beware, blocking behavior might occur in case of channel buffer full due to high load)
 	stateChan = make(chan State, 1) // State channel of the simulation
 	cmdVelChan = make(chan float64, 1)// Command channel of the simulation
 
-	go motor_sim(state, curr_config, 1) //Run sim at 10Hz
+	go motor_sim(state, curr_config, 10) //Run sim at 10Hz
+	go state_log(1) //Log every seconds
 	//close(cmdVelChan) //Stop sim
 }
 
@@ -156,9 +159,29 @@ func motor_sim(state_init State, config Config, sim_freq float64){
 				break;
 			default: //No message sent (buffer full/no receiver)	
 		}
-
-		log.Printf("Motor state: %+v", state)
 		//Wait for next iteration
 		time.Sleep(time.Duration(float64(time.Second)/sim_freq))
+	}
+}
+
+func state_log(log_freq float64){
+	//Logging coroutine
+	var state State
+	for{
+		select {
+			case state = <-stateChan :
+				//Log state
+				// log.Printf("Motor state: %+v", state)
+				logrus.WithFields(logrus.Fields{
+					"Angle (°)": state.Angle,
+					"Velocity (°/s)": state.Velocity,
+					"Error": state.Error,
+				}).Info("Motor state: ")
+			default:
+				log.Printf("No state:")
+				//No message received (buffer empty), do nothing
+		}
+		//Wait for next iteration
+		time.Sleep(time.Duration(float64(time.Second)/log_freq))
 	}
 }
