@@ -33,8 +33,6 @@ var serveCmd = &cobra.Command{
 	Short: "Start Motor Controller server",
 	Long: `Start Motor Controller server`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called with: Port ", port)
-		fmt.Println(cmd.CommandPath())
 		updateConfig()
 		serve()
 	},
@@ -62,7 +60,6 @@ type server struct {
 }
 
 //TODO: Coroutine to regulate motor velocities
-//TODO: Minimal trajectory time (eg 1s) to avoid jerks/overshoots
 func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, error) {
 	//TODO: use as a coroutine to prevent blocking the main thread
 	var(
