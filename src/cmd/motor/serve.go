@@ -173,6 +173,7 @@ func state_log(log_freq float64){
 				//Log state
 				// log.Printf("Motor state: %+v", state)
 				logrus.WithFields(logrus.Fields{
+					"ID": curr_config.Id,
 					"Angle (°)": state.Angle,
 					"Velocity (°/s)": state.Velocity,
 					"Error": state.Error,

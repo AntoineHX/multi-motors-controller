@@ -66,8 +66,6 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 	//TODO: use a coroutines to prevent blocking the main thread	
 	var tgt_angles = []float64{in.GetAngles()[0], in.GetAngles()[0], in.GetAngles()[0]} //TODO: Replace by in.GetAngles()
 	
-
-	//TODO: Check error states of motors
 	//TODO: Check target angles limits
 
 	//Compute velocities
@@ -78,20 +76,32 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 		traj_times = []float64{} //Trajectory times
 		s_traj_t float64 //Trajectory time (Synchronized motion)
 		limit_vel = false //Limit velocity to slowest motor
+		motor_errors =  []string{} //Motor errors message
+		success bool = true //Success flag
 	) 
 	for i := range tgt_angles {
 		//TODO: Use a coroutine to avoid blocking the main thread
 		motor_state := getMotorState(i) //Get current motor state
 		motor_pos = append(motor_pos, motor_state.Angle)
 		max_vels = append(max_vels, motor_configs[i].Max_vel)
+		motor_errors = append(motor_errors, "["+motor_state.Error + "]") //For display purpose
+		if motor_state.Error != ""{ //If any motor is in fault, don't send command
+			success = false
+		}
 		
 		//Compute minimum trajectory times
 		traj_times = append(traj_times, math.Abs(tgt_angles[i]-motor_pos[i])/max_vels[i])
 	}
 	log.Printf("Requested joint positions: %v -> %v", motor_pos, tgt_angles)
 	// log.Printf("t: %v - %v", slices.Min(traj_times), traj_times)
+	if !success{ //If any motor is in fault, stop here
+		log.Printf("Motor error preventing command: %v", motor_errors)
+		return &pb.Angles{Angles: motor_pos}, nil //Return motor positions TODO: Return error message
+	}
+
 	//Compute maximal velocities
 	s_traj_t = slices.Min(traj_times) //Minimum trajectory time
+	//TODO: Prevent NaN in case of 0 trajectory time
 	for i := range tgt_angles {
 		cmd_vel = append(cmd_vel, (tgt_angles[i]-motor_pos[i])/s_traj_t)
 		if math.Abs(cmd_vel[i]) > max_vels[i] { // Velocity needs to be limited (Flag)
