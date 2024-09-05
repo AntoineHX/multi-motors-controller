@@ -63,13 +63,9 @@ type server struct {
 
 //TODO: Coroutine to regulate motor velocities
 func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, error) {
-	//TODO: use a coroutines to prevent blocking the main thread	
-	var tgt_angles = []float64{in.GetAngles()[0], in.GetAngles()[0], in.GetAngles()[0]} //TODO: Replace by in.GetAngles()
-	
-	//TODO: Check target angles limits
-
-	//Compute velocities
+	//TODO: use as a coroutine to prevent blocking the main thread
 	var(
+		tgt_angles = []float64{in.GetAngles()[0], in.GetAngles()[0], in.GetAngles()[0]} //TODO: Replace by in.GetAngles()
 		cmd_vel = []float64{} //Commanded velocities
 		motor_pos = []float64{} //Current motor positions
 		max_vels = []float64{} //Maximum velocities
@@ -77,8 +73,9 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 		s_traj_t float64 //Trajectory time (Synchronized motion)
 		limit_vel = false //Limit velocity to slowest motor
 		motor_errors =  []string{} //Motor errors message
-		success bool = true //Success flag
+		controller_error string = "" //Controller error type
 	) 
+	//Get motor states
 	for i := range tgt_angles {
 		//TODO: Use a coroutine to avoid blocking the main thread
 		motor_state := getMotorState(i) //Get current motor state
@@ -86,46 +83,68 @@ func (s *server) SetJoints(ctx context.Context, in *pb.Angles) (*pb.Angles, erro
 		max_vels = append(max_vels, motor_configs[i].Max_vel)
 		motor_errors = append(motor_errors, "["+motor_state.Error + "]") //For display purpose
 		if motor_state.Error != ""{ //If any motor is in fault, don't send command
-			success = false
+			controller_error = "MotorFault"
 		}
-		
-		//Compute minimum trajectory times
-		traj_times = append(traj_times, math.Abs(tgt_angles[i]-motor_pos[i])/max_vels[i])
 	}
 	log.Printf("Requested joint positions: %v -> %v", motor_pos, tgt_angles)
 	// log.Printf("t: %v - %v", slices.Min(traj_times), traj_times)
-	if !success{ //If any motor is in fault, stop here
-		log.Printf("Motor error preventing command: %v", motor_errors)
-		return &pb.Angles{Angles: motor_pos}, nil //Return motor positions TODO: Return error message
-	}
 
-	//Compute maximal velocities
-	s_traj_t = slices.Min(traj_times) //Minimum trajectory time
-	//TODO: Prevent NaN in case of 0 trajectory time
-	for i := range tgt_angles {
-		cmd_vel = append(cmd_vel, (tgt_angles[i]-motor_pos[i])/s_traj_t)
-		if math.Abs(cmd_vel[i]) > max_vels[i] { // Velocity needs to be limited (Flag)
-			limit_vel = true
-		}
-	}
-	// log.Printf("cmd_vel: %v - %v", cmd_vel, limit_vel)
-	if limit_vel { //Limit velocity to slowest motor
-		s_traj_t = slices.Max(traj_times) //Trajectory time of slowest motor
-		for i := range cmd_vel  {
-			cmd_vel[i]= (tgt_angles[i]-motor_pos[i])/s_traj_t
+	if controller_error ==""{ //If no error, check for valid target angles
+		for i, angle := range tgt_angles {
+			if angle > motor_configs[i].Max_pos || angle < motor_configs[i].Min_pos{
+				controller_error = "InvalidTargetAngles"
+				break
+			}
 		}
 	}
 
-	//Send command to motors
-	log.Printf("Requested joints velocities (%v s): %v", s_traj_t, cmd_vel)
-	for i, vel := range cmd_vel { 		
-		setMotorVel(i, vel)
+	//Compute velocities
+	if controller_error ==""{ //If no error, compute velocities
+		for i := range tgt_angles {
+			//Compute minimum trajectory times
+			traj_times = append(traj_times, math.Abs(tgt_angles[i]-motor_pos[i])/max_vels[i])
+		}
+		
+
+		//Compute maximal velocities
+		s_traj_t = slices.Min(traj_times) //Minimum trajectory time
+		//TODO: Prevent NaN in case of 0 trajectory time
+		for i := range tgt_angles {
+			cmd_vel = append(cmd_vel, (tgt_angles[i]-motor_pos[i])/s_traj_t)
+			if math.Abs(cmd_vel[i]) > max_vels[i] { // Velocity needs to be limited (Flag)
+				limit_vel = true
+			}
+		}
+		// log.Printf("cmd_vel: %v - %v", cmd_vel, limit_vel)
+		if limit_vel { //Limit velocity to slowest motor
+			s_traj_t = slices.Max(traj_times) //Trajectory time of slowest motor
+			for i := range cmd_vel  {
+				cmd_vel[i]= (tgt_angles[i]-motor_pos[i])/s_traj_t
+			}
+		}
 	}
 
-	//Stop motors after trajectory time
-	go stopMotors(time.Duration(float64(time.Second)*s_traj_t))
+	switch controller_error {
+		case "MotorFault":
+			log.Printf("Motor error preventing command: %v", motor_errors)
+			return &pb.Angles{Angles: motor_pos}, nil //Return motor positions TODO: Return error message
+		case "InvalidTargetAngles":
+			log.Print("Invalid target angles:")
+			for i, tgt := range tgt_angles{
+				log.Printf("	Motor %d: %f < [%f] < %f", motor_configs[i].Id, motor_configs[i].Min_pos, tgt, motor_configs[i].Max_pos)
+			}
+			return &pb.Angles{Angles: motor_pos}, nil //Return motor positions TODO: Return error message
+		default: //No error
+			//Send command to motors
+			log.Printf("Requested joints velocities (%v s): %v", s_traj_t, cmd_vel)
+			for i, vel := range cmd_vel { 		
+				setMotorVel(i, vel)
+			}
 
-	return &pb.Angles{Angles: tgt_angles}, nil
+			//Stop motors after trajectory time
+			go stopMotors(time.Duration(float64(time.Second)*s_traj_t))
+			return &pb.Angles{Angles: tgt_angles}, nil
+	}
 }
 
 func stopMotors(delay time.Duration) {
